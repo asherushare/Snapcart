@@ -1,0 +1,231 @@
+"use client";
+import { ArrowLeft, Loader, PlusCircle, Upload } from "lucide-react";
+import Link from "next/link";
+import React, { ChangeEvent, FormEvent, useState } from "react";
+import { motion } from "motion/react";
+import Image from "next/image";
+import axios from "axios";
+
+const categories = [
+  "Fruits & Vegetables",
+  "Dairy & Eggs",
+  "Rice, Atta & Grains",
+  "Snacks & Biscuits",
+  "Spices & Masalas",
+  "Beverages & Drinks",
+  "Personal Care",
+  "Household Essentials",
+  "Instant & Packaged Food",
+  "Baby & Pet Care",
+];
+const units = ["kg", "g", "liter", "ml", "piece", "pack"];
+
+function AddGrocery() {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [unit, setUnit] = useState("");
+  const [price, setPrice] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>();
+  const [backendImage, setBackendImage] = useState<File | null>();
+
+  const hangleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length == 0) return;
+    const file = files[0];
+    setBackendImage(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("category", category);
+      formData.append("price", price);
+      formData.append("unit", unit);
+      formData.append("expiryDate", expiryDate);
+      if (backendImage) {
+        formData.append("image", backendImage);
+      }
+      const result = await axios.post("/api/admin/add-grocery", formData);
+      console.log("Grocery added:", result.data);
+      setLoading(false);
+      alert("✅ Grocery added successfully!");
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error:", error.response?.data || error.message);
+      alert(
+        "❌ Error: " +
+          (error.response?.data?.message || "Failed to add grocery"),
+      );
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-50 to-white py-16 relative">
+      <Link
+        href={"/"}
+        className="absolute top-6 left-6 flex items-center gap-2 text-green-700 font-semibold bg-white px-4 py-2 rounded-full shadow-md hover:bg-green-100 hover:shadow-lg transition-all"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="hidden md:flex">Back to home</span>
+      </Link>
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white w-full max-w-2xl shadow-2xl rounded-3xl border border-green-100 p-8"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center gap-3">
+            <PlusCircle className="text-green-600 w-8 h-8" />
+            <h1>Add Your Grocery</h1>
+          </div>
+          <p className="text-gray-500 text-sm mt-2 text-center">
+            Fill out the details below to add a new grocery item.
+          </p>
+        </div>
+        <form
+          action=""
+          className="flex flex-col gap-6 w-full"
+          onSubmit={handleSubmit}
+        >
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-gray-700 font-medium mb-1"
+            >
+              Grocery Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="name"
+              type="text"
+              placeholder="eg: sweets"
+              onChange={(e) => setName(e.target.value)}
+              value={name}
+              required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="category"
+                value={category}
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all bg-white"
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat, i) => (
+                  <option key={i} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Units <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="unit"
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all bg-white"
+                onChange={(e) => setUnit(e.target.value)}
+                value={unit}
+              >
+                <option value="">Select Unit</option>
+                {units.map((cat, i) => (
+                  <option key={i} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="expiryDate"
+              className="block text-gray-700 font-medium mb-1"
+            >
+              Expiry Date <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="expiryDate"
+              type="date"
+              onChange={(e) => setExpiryDate(e.target.value)}
+              value={expiryDate}
+              required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all"
+              min={new Date().toISOString().split("T")[0]}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="price"
+              className="block text-gray-700 font-medium mb-1"
+            >
+              Price <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="price"
+              type="text"
+              placeholder="eg: 120"
+              required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all"
+              onChange={(e) => setPrice(e.target.value)}
+              value={price}
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            <label
+              htmlFor="image"
+              className="cursor-pointer flex items-center justify-center gap-2 bg-green-50 text-green-700 font-semibold border border-green-200 rounded-xl px-6 py-3 hover:bg-green-100 transition-all w-full sm:w-auto"
+            >
+              <Upload className="w-5 h-5" /> Upload image
+            </label>
+            <input
+              type="file"
+              id="image"
+              accept="image/*"
+              hidden
+              onChange={hangleImageChange}
+            />
+            {preview && (
+              <Image
+                src={preview}
+                width={100}
+                height={100}
+                alt="image"
+                className="rounded-xl shadow-md border border-gray-200 object-cover"
+              />
+            )}
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.9 }}
+            disabled={loading}
+            className="mt-4 w-full bg-linear-to-r from-green-500 to-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <Loader className="w-5 h-5 animate-spin" />
+            ) : (
+              "Add Grocery"
+            )}
+          </motion.button>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+export default AddGrocery;
