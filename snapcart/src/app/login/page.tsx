@@ -20,13 +20,19 @@ function Login() {
         e.preventDefault();
         setLoading(true);
         try {
-            await signIn("credentials", {
-                email, password
-            })
-            router.push("/");
-            setLoading(false);
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
+            if (result?.ok) {
+              router.push("/");
+            } else {
+              console.log(result?.error || "Login failed");
+            }
         } catch (error) {
             console.log(error);
+        } finally {
             setLoading(false);
         }
     }
